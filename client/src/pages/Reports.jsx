@@ -172,13 +172,14 @@ const PdfModal = ({ members, records, onClose }) => {
 
         const rows = sortedForPdf.map(r => {
           const isIncome = r.type === 'INCOME';
-          pdfRunning += isIncome ? r.amount : -r.amount;
+          const jumlah = isIncome ? r.netAmount : r.amount;
+          pdfRunning += isIncome ? r.netAmount : -r.amount;
           const color = isIncome ? [5, 150, 105] : [220, 38, 38];
           const totalColor = pdfRunning >= 0 ? [5, 150, 105] : [220, 38, 38];
           return [
             new Date(r.date).toLocaleDateString('id-ID'),
             { content: isIncome ? 'Uang Masuk' : 'Uang Keluar', styles: { textColor: color, fontStyle: 'bold' } },
-            { content: (isIncome ? '+' : '-') + formatCurrency(r.amount), styles: { textColor: color } },
+            { content: (isIncome ? '+' : '-') + formatCurrency(jumlah), styles: { textColor: color } },
             { content: formatCurrency(pdfRunning), styles: { textColor: totalColor, fontStyle: 'bold' } },
           ];
         });

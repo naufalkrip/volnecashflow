@@ -377,14 +377,16 @@ const Finance = () => {
   const todayGross = records.filter(r => r.type === 'INCOME' && new Date(r.date).toDateString() === today)
     .reduce((s, r) => s + r.amount, 0);
 
-  // Group by member
+  // Group by member — sorted oldest to newest
   const memberGroups = useMemo(() => {
     const groups = {};
-    records.forEach(record => {
-      const key = record.memberId;
-      if (!groups[key]) groups[key] = { member: record.affiliate, records: [] };
-      groups[key].records.push(record);
-    });
+    [...records]
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .forEach(record => {
+        const key = record.memberId;
+        if (!groups[key]) groups[key] = { member: record.affiliate, records: [] };
+        groups[key].records.push(record);
+      });
     return Object.entries(groups);
   }, [records]);
 

@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AffiliateMember {
+  id        String   @id @default(uuid())
+  name      String
+  username  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  records   FinanceRecord[]
+}
+
+model FinanceRecord {
+  id             String          @id @default(uuid())
+  type           String          @default("INCOME") // INCOME, WITHDRAWAL
+  amount         Float
+  deduction      Float
+  netAmount      Float
+  status         String          @default("COMPLETED")
+  date           DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  memberId       String
+  affiliate      AffiliateMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id                  String   @id @default(uuid())
+  deductionPercentage Float    @default(30.0)
+  language            String   @default("en") // en, id
+  updatedAt           DateTime @updatedAt
+}

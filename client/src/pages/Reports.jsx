@@ -166,9 +166,9 @@ const PdfModal = ({ members, records, onClose }) => {
         // ── TABLE ──────────────────────────────────────────────────
         const sortedForPdf = [...filteredRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
         let pdfRunning = 0;
-        const totalMasuk = sortedForPdf.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.amount, 0);
+        const totalMasukNet = sortedForPdf.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.netAmount, 0);
         const totalKeluar = sortedForPdf.filter(r => r.type === 'WITHDRAWAL').reduce((s, r) => s + r.amount, 0);
-        const saldoAkhir = totalMasuk - totalKeluar;
+        const saldoAkhir = totalMasukNet - totalKeluar;
 
         const rows = sortedForPdf.map(r => {
           const isIncome = r.type === 'INCOME';
@@ -191,7 +191,7 @@ const PdfModal = ({ members, records, onClose }) => {
           foot: [[
             { content: 'TOTAL', styles: { fontStyle: 'bold' } },
             '',
-            { content: formatCurrency(totalMasuk), styles: { fontStyle: 'bold', textColor: [5, 150, 105] } },
+            { content: formatCurrency(totalMasukNet), styles: { fontStyle: 'bold', textColor: [5, 150, 105] } },
             { content: formatCurrency(saldoAkhir), styles: { fontStyle: 'bold', textColor: saldoAkhir >= 0 ? [5, 150, 105] : [220, 38, 38] } },
           ]],
           theme: 'grid',

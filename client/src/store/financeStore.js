@@ -69,8 +69,9 @@ export const useFinanceStore = create((set, get) => ({
       toast.success('Login successful!');
       return true;
     } catch (error) {
-      set({ error: error.response?.data?.message || 'Login failed', isLoading: false });
-      toast.error(error.response?.data?.message || 'Login failed');
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+      set({ error: errorMsg, isLoading: false });
+      toast.error(errorMsg);
       return false;
     }
   },

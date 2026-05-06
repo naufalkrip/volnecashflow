@@ -7,7 +7,13 @@ import membersRoutes from './routes/members.routes.js';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://volnecashflow.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes

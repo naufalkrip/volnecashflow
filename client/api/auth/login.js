@@ -16,12 +16,12 @@ export default async function handler(req, res) {
       .eq('username', username)
       .single();
 
-    // Auto-seed admin if not exists
-    if (!user && username === 'admin') {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+    // Auto-seed user if not exists
+    if (!user && username === 'nopal') {
+      const hashedPassword = await bcrypt.hash('Mmnmmn130402', 10);
       const { data: newUser, error: createError } = await supabase
         .from('User')
-        .insert([{ name: 'Super Admin', username: 'admin', password: hashedPassword, role: 'ADMIN' }])
+        .insert([{ name: 'Nopal', username: 'nopal', password: hashedPassword, role: 'ADMIN' }])
         .select()
         .single();
       if (createError) throw createError;

@@ -82,6 +82,27 @@ export const useFinanceStore = create((set, get) => ({
     set({ user: null, token: null, isAuthenticated: false, records: [], members: [], dashboardStats: null });
   },
 
+  changeCredentials: async ({ currentPassword, newUsername, newPassword }) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.put('/auth/change-credentials', { currentPassword, newUsername, newPassword });
+      set({ isLoading: false });
+      toast.success('Kredensial berhasil diperbarui! Silakan login kembali.');
+      // Force re-login after credential change for security
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        get().stopPolling();
+        set({ user: null, token: null, isAuthenticated: false });
+      }, 1500);
+      return true;
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Gagal memperbarui kredensial';
+      set({ error: msg, isLoading: false });
+      toast.error(msg);
+      return false;
+    }
+  },
+
   fetchDashboardStats: async (silent = false) => {
     if (!silent) set({ isLoading: true, error: null });
     try {

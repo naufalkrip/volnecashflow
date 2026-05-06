@@ -9,7 +9,8 @@ import {
   LogOut,
   Menu,
   X,
-  Users
+  Users,
+  Wifi
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../../assets/logo.png';
@@ -171,10 +172,19 @@ const MainLayout = () => {
             </h1>
           </div>
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-700">
-              {new Date().getHours() < 12 ? '🌤 Good Morning' : '🌙 Good Evening'}
-            </p>
-            <p className="text-xs text-slate-400 font-medium">
+            <div className="flex items-center justify-end gap-2">
+              <p className="text-sm font-bold text-slate-700">
+                {new Date().getHours() < 12 ? '🌤 Good Morning' : '🌙 Good Evening'}
+              </p>
+              <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md border border-emerald-100" title="Realtime Auto-Sync Active">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Sync</span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>

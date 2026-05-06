@@ -25,11 +25,21 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const { checkAuth, isCheckingAuth } = useFinanceStore();
+  const { checkAuth, isCheckingAuth, isAuthenticated, startPolling, stopPolling } = useFinanceStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Handle global auto-sync polling
+  useEffect(() => {
+    if (isAuthenticated) {
+      startPolling();
+    } else {
+      stopPolling();
+    }
+    return () => stopPolling();
+  }, [isAuthenticated, startPolling, stopPolling]);
 
   if (isCheckingAuth) {
     return (

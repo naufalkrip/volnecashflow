@@ -13,6 +13,30 @@ export const useFinanceStore = create((set, get) => ({
   settings: null,
   isLoading: false,
   error: null,
+  pollingIntervalId: null,
+
+  startPolling: () => {
+    // Prevent multiple intervals
+    if (get().pollingIntervalId) return;
+    
+    const interval = setInterval(() => {
+      if (get().isAuthenticated) {
+        get().fetchDashboardStats(true);
+        get().fetchRecords({}, true);
+        get().fetchMembers({}, true);
+      }
+    }, 5000); // Poll every 5 seconds
+    
+    set({ pollingIntervalId: interval });
+  },
+
+  stopPolling: () => {
+    const { pollingIntervalId } = get();
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId);
+      set({ pollingIntervalId: null });
+    }
+  },
 
   checkAuth: async () => {
     set({ isCheckingAuth: true });
@@ -53,11 +77,12 @@ export const useFinanceStore = create((set, get) => ({
 
   logout: () => {
     localStorage.removeItem('token');
+    get().stopPolling();
     set({ user: null, token: null, isAuthenticated: false, records: [], members: [], dashboardStats: null });
   },
 
-  fetchDashboardStats: async () => {
-    set({ isLoading: true, error: null });
+  fetchDashboardStats: async (silent = false) => {
+    if (!silent) set({ isLoading: true, error: null });
     try {
       const response = await api.get('/finance/dashboard');
       set({ dashboardStats: response.data, isLoading: false });
@@ -66,8 +91,8 @@ export const useFinanceStore = create((set, get) => ({
     }
   },
 
-  fetchRecords: async (params = {}) => {
-    set({ isLoading: true, error: null });
+  fetchRecords: async (params = {}, silent = false) => {
+    if (!silent) set({ isLoading: true, error: null });
     try {
       const response = await api.get('/finance', { params });
       set({ records: response.data, isLoading: false });
@@ -141,8 +166,8 @@ export const useFinanceStore = create((set, get) => ({
     }
   },
 
-  fetchMembers: async (params = {}) => {
-    set({ isLoading: true, error: null });
+  fetchMembers: async (params = {}, silent = false) => {
+    if (!silent) set({ isLoading: true, error: null });
     try {
       const response = await api.get('/members', { params });
       set({ members: response.data, isLoading: false });

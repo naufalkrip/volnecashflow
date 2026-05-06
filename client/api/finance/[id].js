@@ -1,6 +1,6 @@
-import supabase from '../../_lib/supabase.js';
-import { setCors, verifyToken } from '../../_lib/auth.js';
-import { calculateDeduction } from '../../_lib/calculation.js';
+import supabase from '../_lib/supabase.js';
+import { setCors, verifyToken } from '../_lib/auth.js';
+import { calculateDeduction } from '../_lib/calculation.js';
 
 export default async function handler(req, res) {
   setCors(res);

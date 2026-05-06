@@ -5,13 +5,35 @@ import toast from 'react-hot-toast';
 export const useFinanceStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: false, // DON'T trust token immediately
+  isCheckingAuth: true, // App starts in loading state
   records: [],
   members: [],
   dashboardStats: null,
   settings: null,
   isLoading: false,
   error: null,
+
+  checkAuth: async () => {
+    set({ isCheckingAuth: true });
+    try {
+      const response = await api.get('/auth/me');
+      set({ 
+        isAuthenticated: true, 
+        user: response.data.user,
+        isCheckingAuth: false 
+      });
+    } catch (error) {
+      // Invalid token or no token
+      localStorage.removeItem('token');
+      set({ 
+        isAuthenticated: false, 
+        user: null,
+        token: null,
+        isCheckingAuth: false 
+      });
+    }
+  },
 
   login: async (username, password) => {
     set({ isLoading: true, error: null });

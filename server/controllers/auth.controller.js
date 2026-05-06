@@ -49,3 +49,13 @@ export const login = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const getMe = async (req, res) => {
+  try {
+    // req.user is decoded from token by verifyToken middleware
+    res.json({ valid: true, user: req.user });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

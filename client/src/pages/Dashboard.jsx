@@ -72,15 +72,19 @@ const Dashboard = () => {
     fetchMembers();
   }, [fetchDashboardStats, fetchRecords, fetchMembers]);
 
-  if (isLoading && !dashboardStats) {
+  // Show spinner if no data yet (first load) OR still loading
+  if (!dashboardStats) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+          <p className="text-slate-400 text-sm font-medium animate-pulse">Memuat data...</p>
+        </div>
       </div>
     );
   }
 
-  const { totalAmount, totalDeduction, totalNetAmount } = dashboardStats;
+  const { totalAmount = 0, totalDeduction = 0, totalNetAmount = 0 } = dashboardStats;
 
   return (
     <div className="space-y-6">

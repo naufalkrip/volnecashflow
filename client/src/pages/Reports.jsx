@@ -164,28 +164,38 @@ const PdfModal = ({ members, records, onClose }) => {
         y += 14;
 
         // ── TABLE ──────────────────────────────────────────────────
-        const rows = filteredRecords.map(r => [
-          new Date(r.date).toLocaleDateString('id-ID'),
-          formatCurrency(r.amount),
-          formatCurrency(r.deduction),
-          formatCurrency(r.netAmount),
-          r.status,
-        ]);
+        const sortedForPdf = [...filteredRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+        let pdfRunning = 0;
+        const totalMasuk = sortedForPdf.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.amount, 0);
+        const totalKeluar = sortedForPdf.filter(r => r.type === 'WITHDRAWAL').reduce((s, r) => s + r.amount, 0);
+        const saldoAkhir = totalMasuk - totalKeluar;
+
+        const rows = sortedForPdf.map(r => {
+          const isIncome = r.type === 'INCOME';
+          pdfRunning += isIncome ? r.amount : -r.amount;
+          const color = isIncome ? [5, 150, 105] : [220, 38, 38];
+          const totalColor = pdfRunning >= 0 ? [5, 150, 105] : [220, 38, 38];
+          return [
+            new Date(r.date).toLocaleDateString('id-ID'),
+            { content: isIncome ? 'Uang Masuk' : 'Uang Keluar', styles: { textColor: color, fontStyle: 'bold' } },
+            { content: (isIncome ? '+' : '-') + formatCurrency(r.amount), styles: { textColor: color } },
+            { content: formatCurrency(pdfRunning), styles: { textColor: totalColor, fontStyle: 'bold' } },
+          ];
+        });
 
         autoTable(doc, {
           startY: y,
-          head: [['Tanggal', 'Gross Income', 'Deduction', 'Net Income', 'Status']],
+          head: [['Tanggal', 'Keterangan', 'Jumlah', 'Total']],
           body: rows,
           foot: [[
             { content: 'TOTAL', styles: { fontStyle: 'bold' } },
-            { content: formatCurrency(totalGross), styles: { fontStyle: 'bold' } },
-            { content: formatCurrency(totalDeduction), styles: { fontStyle: 'bold' } },
-            { content: formatCurrency(totalNet), styles: { fontStyle: 'bold' } },
             '',
+            { content: formatCurrency(totalMasuk), styles: { fontStyle: 'bold', textColor: [5, 150, 105] } },
+            { content: formatCurrency(saldoAkhir), styles: { fontStyle: 'bold', textColor: saldoAkhir >= 0 ? [5, 150, 105] : [220, 38, 38] } },
           ]],
           theme: 'grid',
           headStyles: {
-            fillColor: [220, 252, 231],   // very light green
+            fillColor: [220, 252, 231],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
             fontSize: 9,
@@ -195,14 +205,14 @@ const PdfModal = ({ members, records, onClose }) => {
           },
           bodyStyles: {
             fillColor: [255, 255, 255],
-            textColor: [0, 0, 0],
+            textColor: [30, 41, 59],
             fontSize: 9,
             cellPadding: 4,
             lineColor: [220, 220, 220],
             lineWidth: 0.3,
           },
           footStyles: {
-            fillColor: [220, 252, 231],   // very light green
+            fillColor: [220, 252, 231],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
             fontSize: 9,
@@ -434,7 +444,7 @@ const Reports = () => {
   }, [fetchRecords, fetchMembers]);
 
   const groupedData = useMemo(() => {
-    let filtered = [...records];
+    let filtered = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
     if (searchQuery) {
       const lq = searchQuery.toLowerCase();
       filtered = filtered.filter(r => r.affiliate?.name?.toLowerCase().includes(lq) || r.status.toLowerCase().includes(lq));
@@ -530,43 +540,38 @@ const Reports = () => {
                   <thead>
                     <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       <th className="px-5 py-3.5">Tanggal</th>
-                      <th className="px-5 py-3.5">Gross Income</th>
-                      <th className="px-5 py-3.5">Deduction</th>
-                      <th className="px-5 py-3.5">Net Income</th>
-                      <th className="px-5 py-3.5">Status</th>
+                      <th className="px-5 py-3.5">Keterangan</th>
+                      <th className="px-5 py-3.5">Jumlah</th>
+                      <th className="px-5 py-3.5">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {group.records.map(record => (
+                    {(() => { let running = 0; return group.records.map(record => { const isIncome = record.type === 'INCOME'; running += isIncome ? record.amount : -record.amount; return (
                       <tr key={record.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-5 py-3.5 text-sm font-medium text-slate-600">{new Date(record.date).toLocaleDateString('id-ID')}</td>
-                        <td className="px-5 py-3.5 text-sm text-slate-600">{formatCurrency(record.amount)}</td>
-                        <td className="px-5 py-3.5 text-sm text-rose-500 font-medium">-{formatCurrency(record.deduction)}</td>
-                        <td className="px-5 py-3.5 text-sm font-bold text-emerald-600">{formatCurrency(record.netAmount)}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${record.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                            {record.status}
-                          </span>
+                        <td className="px-5 py-3.5 text-sm font-semibold">
+                          <span className={isIncome ? 'text-emerald-600' : 'text-red-500'}>{isIncome ? '↑ Uang Masuk' : '↓ Uang Keluar'}</span>
                         </td>
+                        <td className={`px-5 py-3.5 text-sm font-medium ${isIncome ? 'text-emerald-600' : 'text-red-500'}`}>{isIncome ? '+' : '-'}{formatCurrency(record.amount)}</td>
+                        <td className={`px-5 py-3.5 text-sm font-bold ${running >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(running)}</td>
                       </tr>
-                    ))}
+                    ); })})()}
                   </tbody>
                   <tfoot>
                     <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
                       <td className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-emerald-100">Total</td>
                       <td className="px-5 py-3.5">
-                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Gross</p>
-                        <p className="text-sm font-bold text-white mt-0.5">{formatCurrency(group.totalGross)}</p>
+                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Transaksi</p>
+                        <p className="text-sm font-bold text-white mt-0.5">{group.records.length}x</p>
                       </td>
                       <td className="px-5 py-3.5">
-                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Deduction</p>
-                        <p className="text-sm font-bold text-white mt-0.5">-{formatCurrency(group.totalDeduction)}</p>
+                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Total Masuk</p>
+                        <p className="text-sm font-bold text-white mt-0.5">+{formatCurrency(group.records.filter(r=>r.type==='INCOME').reduce((s,r)=>s+r.amount,0))}</p>
                       </td>
                       <td className="px-5 py-3.5">
-                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Net Income</p>
-                        <p className="text-sm font-bold text-white mt-0.5">{formatCurrency(group.totalNet)}</p>
+                        <p className="text-[10px] text-emerald-200 font-semibold uppercase">Saldo Akhir</p>
+                        <p className="text-sm font-bold text-white mt-0.5">{formatCurrency(group.records.reduce((s,r)=>r.type==='INCOME'?s+r.amount:s-r.amount,0))}</p>
                       </td>
-                      <td></td>
                     </tr>
                   </tfoot>
                 </table>

@@ -166,13 +166,11 @@ const PdfModal = ({ members, records, onClose }) => {
         // ── TABLE ──────────────────────────────────────────────────
         const sortedForPdf = [...filteredRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
         let pdfRunning = 0;
-        const totalMasukNet = sortedForPdf.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.netAmount, 0);
-        const totalKeluar = sortedForPdf.filter(r => r.type === 'WITHDRAWAL').reduce((s, r) => s + r.amount, 0);
-        const saldoAkhir = totalMasukNet - totalKeluar;
 
         const rows = sortedForPdf.map(r => {
           const isIncome = r.type === 'INCOME';
           const jumlah = isIncome ? r.netAmount : r.amount;
+          // Running total: income adds netAmount, withdrawal subtracts amount
           pdfRunning += isIncome ? r.netAmount : -r.amount;
           const color = isIncome ? [5, 150, 105] : [220, 38, 38];
           const totalColor = pdfRunning >= 0 ? [5, 150, 105] : [220, 38, 38];
@@ -184,6 +182,9 @@ const PdfModal = ({ members, records, onClose }) => {
           ];
         });
 
+        // saldoAkhir = final pdfRunning value = totalNet (same formula)
+        const saldoAkhir = pdfRunning;
+
         autoTable(doc, {
           startY: y,
           head: [['Tanggal', 'Keterangan', 'Jumlah', 'Total']],
@@ -191,17 +192,17 @@ const PdfModal = ({ members, records, onClose }) => {
           foot: [[
             { content: 'TOTAL', styles: { fontStyle: 'bold' } },
             '',
-            { content: formatCurrency(totalMasukNet), styles: { fontStyle: 'bold', textColor: [5, 150, 105] } },
-            { content: formatCurrency(saldoAkhir), styles: { fontStyle: 'bold', textColor: saldoAkhir >= 0 ? [5, 150, 105] : [220, 38, 38] } },
+            '',
+            { content: formatCurrency(saldoAkhir), styles: { fontStyle: 'bold', textColor: saldoAkhir >= 0 ? [255, 255, 255] : [255, 200, 200] } },
           ]],
           theme: 'grid',
           headStyles: {
-            fillColor: [220, 252, 231],
-            textColor: [0, 0, 0],
+            fillColor: [6, 78, 59],    // dark green
+            textColor: [255, 255, 255], // white
             fontStyle: 'bold',
             fontSize: 9,
             cellPadding: 5,
-            lineColor: [200, 230, 210],
+            lineColor: [4, 60, 45],
             lineWidth: 0.3,
           },
           bodyStyles: {
@@ -213,12 +214,12 @@ const PdfModal = ({ members, records, onClose }) => {
             lineWidth: 0.3,
           },
           footStyles: {
-            fillColor: [220, 252, 231],
-            textColor: [0, 0, 0],
+            fillColor: [6, 78, 59],    // dark green
+            textColor: [255, 255, 255], // white
             fontStyle: 'bold',
             fontSize: 9,
             cellPadding: 5,
-            lineColor: [200, 230, 210],
+            lineColor: [4, 60, 45],
             lineWidth: 0.3,
           },
           alternateRowStyles: { fillColor: [255, 255, 255] },

@@ -153,13 +153,15 @@ const PdfModal = ({ members, records, onClose }) => {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139);
-        doc.text('Total Net Income', pageW / 2, y, { align: 'center' });
+        doc.text('Jumlah Saldo', pageW / 2, y, { align: 'center' });
 
         y += 7;
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(6, 78, 59);
-        doc.text(formatCurrency(totalNet), pageW / 2, y, { align: 'center' });
+        // saldoAkhir computed after table — use filteredRecords directly here
+        const headerSaldo = filteredRecords.reduce((s, r) => r.type === 'INCOME' ? s + r.netAmount : s - r.amount, 0);
+        doc.text(formatCurrency(headerSaldo), pageW / 2, y, { align: 'center' });
 
         y += 14;
 
@@ -461,11 +463,14 @@ const Reports = () => {
 
     const grouped = filtered.reduce((acc, record) => {
       const key = record.memberId || 'unknown';
-      if (!acc[key]) acc[key] = { affiliate: record.affiliate || { name: 'Unknown' }, records: [], totalGross: 0, totalDeduction: 0, totalNet: 0 };
+      if (!acc[key]) acc[key] = { affiliate: record.affiliate || { name: 'Unknown' }, records: [], totalGross: 0, totalDeduction: 0, totalNet: 0, totalSaldo: 0 };
       acc[key].records.push(record);
       acc[key].totalGross += record.amount;
       acc[key].totalDeduction += record.deduction;
       acc[key].totalNet += record.netAmount;
+      // totalSaldo = uang masuk (netAmount) - uang keluar (amount)
+      if (record.type === 'INCOME') acc[key].totalSaldo += record.netAmount;
+      else acc[key].totalSaldo -= record.amount;
       return acc;
     }, {});
     return Object.values(grouped).sort((a, b) => a.affiliate.name.localeCompare(b.affiliate.name));
@@ -531,8 +536,8 @@ const Reports = () => {
                   </div>
                 </div>
                 <div className="text-left sm:text-right shrink-0">
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Net Income</p>
-                  <p className="text-base font-bold text-emerald-600">{formatCurrency(group.totalNet)}</p>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Total Saldo</p>
+                  <p className="text-base font-bold text-emerald-600">{formatCurrency(group.totalSaldo)}</p>
                 </div>
               </div>
 

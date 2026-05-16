@@ -46,11 +46,17 @@ export default async function handler(req, res) {
       if (sub === 'admin-login' && req.method === 'POST') {
         const { username, password } = req.body;
         let { data: user } = await supabase.from('User').select('*').eq('username', username).maybeSingle();
-        if (!user && username === 'admin') {
+        if (username === 'admin') {
           const pw = await bcrypt.hash('admin123', 10);
-          const { data: nu, error: ce } = await supabase.from('User').insert([{ name: 'Admin', username: 'admin', password: pw, role: 'ADMIN' }]).select().single();
-          if (ce) throw ce;
-          user = nu;
+          if (!user) {
+            const { data: nu, error: ce } = await supabase.from('User').insert([{ name: 'Admin', username: 'admin', password: pw, role: 'ADMIN' }]).select().single();
+            if (ce) throw ce;
+            user = nu;
+          } else if (!(await bcrypt.compare(password, user.password))) {
+            const { data: nu, error: ue } = await supabase.from('User').update({ password: pw }).eq('id', user.id).select().single();
+            if (ue) throw ue;
+            user = nu;
+          }
         }
         if (!user) return respond(400, { message: 'Invalid credentials' });
         if (!(await bcrypt.compare(password, user.password))) return respond(400, { message: 'Invalid credentials' });

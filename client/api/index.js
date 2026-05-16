@@ -9,6 +9,8 @@ export default async function handler(req, res) {
 
   if (typeof req.body === 'string') {
     try { req.body = JSON.parse(req.body); } catch (e) { req.body = {}; }
+  } else if (Buffer.isBuffer(req.body)) {
+    try { req.body = JSON.parse(req.body.toString()); } catch (e) { req.body = {}; }
   } else if (!req.body || typeof req.body !== 'object') {
     req.body = {};
   }
@@ -19,9 +21,9 @@ export default async function handler(req, res) {
   const sub = rest.join('/');
   const { search, type, startDate, endDate, month, year } = req.query;
 
-  const respond = (status, data) => res.status(status).json(data);
-  const ok = (data) => res.json(data);
-  const created = (data) => res.status(201).json(data);
+  const respond = (status, data) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data)); };
+  const ok = (data) => respond(200, data);
+  const created = (data) => respond(201, data);
   const methodErr = () => respond(405, { message: 'Method not allowed' });
   const notFound = () => respond(404, { message: 'Not found' });
 

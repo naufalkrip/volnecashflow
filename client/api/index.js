@@ -7,11 +7,11 @@ export default async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const slug = req.query.slug || [];
-  const parts = slug.filter(Boolean);
+  const url = new URL(req.url, 'http://localhost');
+  const parts = url.pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
   const [group, ...rest] = parts;
   const sub = rest.join('/');
-  const { search, type, startDate, endDate, month, year, id } = req.query;
+  const { search, type, startDate, endDate, month, year } = req.query;
 
   const respond = (status, data) => res.status(status).json(data);
   const ok = (data) => res.json(data);
@@ -171,7 +171,7 @@ export default async function handler(req, res) {
       }
 
       // /api/finance/[id]
-      const finId = id || sub;
+      const finId = sub;
       if (req.method === 'PUT') {
         const { memberId, amount, date, status, type } = req.body;
         const rd = { updatedAt: new Date().toISOString() };
@@ -224,7 +224,7 @@ export default async function handler(req, res) {
       }
 
       // /api/members/[id]
-      const memId = id || sub;
+      const memId = sub;
       if (req.method === 'PUT') {
         const { name, username, isActive } = req.body;
         const { data, error } = await supabase.from('AffiliateMember').update({ name, username, isActive, updatedAt: new Date().toISOString() }).eq('id', memId).select().single();
@@ -329,7 +329,7 @@ export default async function handler(req, res) {
       }
 
       // /api/daily-finance/[id]
-      const dfId = id || sub;
+      const dfId = sub;
       if (req.method === 'PUT') {
         const { type, description, amount, transactionDate } = req.body;
         const ud = {};

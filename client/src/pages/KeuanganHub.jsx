@@ -78,7 +78,7 @@ const GroupModal = ({ onClose, onSubmit, isLoading }) => {
               <FolderOpen size={22} className="text-emerald-600" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-slate-800 truncate">Transaksi Baru</h3>
+              <h3 className="text-sm sm:text-base font-bold text-slate-800 truncate">Grup Baru</h3>
               <p className="text-xs text-slate-400">Buat grup transaksi baru</p>
             </div>
           </div>
@@ -89,7 +89,7 @@ const GroupModal = ({ onClose, onSubmit, isLoading }) => {
         <div className="px-4 sm:px-6 py-4 sm:py-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Transaksi</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Grup</label>
               <input required value={name} onChange={e => setName(e.target.value)}
                 placeholder="Contoh: Liburan Jogja"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none" />
@@ -504,7 +504,7 @@ const RenameModal = ({ onClose, onSubmit, isLoading, initialValue }) => {
         <div className="px-4 sm:px-6 py-4 sm:py-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Transaksi</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Grup</label>
               <input required value={name} onChange={e => setName(e.target.value)}
                 placeholder="Contoh: Liburan Jogja"
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none" />
@@ -687,7 +687,7 @@ const TransactionManager = () => {
           <button onClick={() => setGroupModalOpen(true)}
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-emerald-500/20 text-sm w-full sm:w-auto">
             <Plus size={16} />
-            Tambah Transaksi
+            Buat Grup Baru
           </button>
         </div>
       </div>
@@ -697,14 +697,14 @@ const TransactionManager = () => {
           <div className="w-16 h-16 mx-auto bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 mb-4">
             <FolderOpen size={28} className="text-slate-300" />
           </div>
-          <h3 className="text-base font-bold text-slate-600">Belum Ada Transaksi</h3>
+          <h3 className="text-base font-bold text-slate-600">Belum Ada Grup</h3>
           <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
             Buat grup transaksi baru untuk memisahkan laporan keuangan khusus, seperti "Liburan Jogja" atau "Proyek A".
           </p>
           <button onClick={() => setGroupModalOpen(true)}
             className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm shadow-emerald-500/20 hover:from-emerald-600 hover:to-teal-700 transition-all">
             <Plus size={16} />
-            Buat Transaksi Baru
+            Buat Grup Baru
           </button>
         </div>
       ) : (

@@ -33,6 +33,7 @@ const AdminLayout = () => {
 
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/keuangan', icon: Wallet, label: 'Keuangan' },
     { path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 

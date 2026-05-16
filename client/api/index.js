@@ -6,7 +6,6 @@ import { calculateDeduction } from './_lib/calculation.js';
 
 const app = express();
 
-app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -15,13 +14,19 @@ app.use((req, res, next) => {
   next();
 });
 
-function auth(req, res, next) {
-  try {
-    req.user = verifyToken(req);
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'OPTIONS' || req.body) return next();
+  let data = '';
+  req.on('data', chunk => data += chunk);
+  req.on('end', () => {
+    try { req.body = JSON.parse(data); } catch (e) { req.body = {}; }
     next();
-  } catch (e) {
-    return res.status(401).json({ message: e.message });
-  }
+  });
+});
+
+function auth(req, res, next) {
+  try { req.user = verifyToken(req); next(); }
+  catch (e) { return res.status(401).json({ message: e.message }); }
 }
 
 function adminOnly(req, res, next) {
@@ -30,9 +35,8 @@ function adminOnly(req, res, next) {
 }
 
 // ── AUTH ──
-
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
   const { data: user } = await supabase.from('User').select('*').eq('username', username).maybeSingle();
   if (!user) return res.status(400).json({ message: 'Invalid credentials' });
   if (!(await bcrypt.compare(password, user.password))) return res.status(400).json({ message: 'Invalid credentials' });
@@ -41,7 +45,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ message: 'Username and password are required' });
   if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
   const { data: existing } = await supabase.from('User').select('id').eq('username', username).maybeSingle();
@@ -53,7 +57,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/admin-login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body || {};
   let { data: user } = await supabase.from('User').select('*').eq('username', username).maybeSingle();
   if (username === 'admin') {
     const pw = await bcrypt.hash('admin123', 10);
@@ -91,7 +95,7 @@ app.get('/api/auth/users', auth, adminOnly, async (req, res) => {
 });
 
 app.put('/api/auth/change-credentials', auth, async (req, res) => {
-  const { currentPassword, newUsername, newPassword } = req.body;
+  const { currentPassword, newUsername, newPassword } = req.body || {};
   if (!currentPassword) return res.status(400).json({ message: 'Password saat ini wajib diisi' });
   const { data: user } = await supabase.from('User').select('*').eq('id', req.user.id).single();
   if (!user) return res.status(404).json({ message: 'User tidak ditemukan' });
@@ -113,7 +117,6 @@ app.put('/api/auth/change-credentials', auth, async (req, res) => {
 });
 
 // ── FINANCE ──
-
 app.get('/api/finance/dashboard', auth, async (req, res) => {
   const { data: records } = await supabase.from('FinanceRecord').select('*');
   const income = records.filter(r => r.type === 'INCOME');
@@ -134,20 +137,19 @@ app.get('/api/finance/dashboard', auth, async (req, res) => {
 });
 
 app.get('/api/finance/admin-stats', auth, adminOnly, async (req, res) => {
-  const [users, records, members] = await Promise.all([
+  const [urs, recs, mems] = await Promise.all([
     supabase.from('User').select('id, role, createdAt'),
     supabase.from('FinanceRecord').select('*'),
     supabase.from('AffiliateMember').select('id')
   ]);
-  const totalUsers = users.data.length;
-  const totalAdmins = users.data.filter(u => u.role === 'ADMIN').length;
-  const totalMembers = users.data.filter(u => u.role === 'USER').length;
-  const totalAffiliates = members.data.length;
-  const totalIncome = records.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.amount, 0);
-  const totalDeduction = records.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.deduction, 0);
-  const totalNetAmount = records.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.netAmount, 0);
-  const totalWithdrawal = records.data.filter(r => r.type === 'WITHDRAWAL').reduce((s, r) => s + r.amount, 0);
-  return res.json({ totalUsers, totalAdmins, totalMembers, totalAffiliates, totalIncome, totalDeduction, totalNetAmount, totalWithdrawal });
+  return res.json({
+    totalUsers: urs.data.length, totalAdmins: urs.data.filter(u => u.role === 'ADMIN').length,
+    totalMembers: urs.data.filter(u => u.role === 'USER').length, totalAffiliates: mems.data.length,
+    totalIncome: recs.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.amount, 0),
+    totalDeduction: recs.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.deduction, 0),
+    totalNetAmount: recs.data.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.netAmount, 0),
+    totalWithdrawal: recs.data.filter(r => r.type === 'WITHDRAWAL').reduce((s, r) => s + r.amount, 0)
+  });
 });
 
 app.get('/api/finance', auth, async (req, res) => {
@@ -162,7 +164,7 @@ app.get('/api/finance', auth, async (req, res) => {
 });
 
 app.post('/api/finance', auth, async (req, res) => {
-  const { memberId, amount, date, status, type } = req.body;
+  const { memberId, amount, date, status, type } = req.body || {};
   const rt = type || 'INCOME';
   let ded = 0, net = parseFloat(amount);
   if (rt === 'INCOME') {
@@ -180,7 +182,7 @@ app.post('/api/finance', auth, async (req, res) => {
 });
 
 app.put('/api/finance/:id', auth, async (req, res) => {
-  const { memberId, amount, date, status, type } = req.body;
+  const { memberId, amount, date, status, type } = req.body || {};
   const rd = { updatedAt: new Date().toISOString() };
   if (memberId) rd.memberId = memberId;
   if (date) rd.date = new Date(date).toISOString();
@@ -208,7 +210,6 @@ app.delete('/api/finance/:id', auth, async (req, res) => {
 });
 
 // ── MEMBERS ──
-
 app.get('/api/members', auth, async (req, res) => {
   let q = supabase.from('AffiliateMember').select('*').order('createdAt', { ascending: false });
   const { search } = req.query;
@@ -219,14 +220,14 @@ app.get('/api/members', auth, async (req, res) => {
 });
 
 app.post('/api/members', auth, async (req, res) => {
-  const { name, username, isActive } = req.body;
+  const { name, username, isActive } = req.body || {};
   const { data, error } = await supabase.from('AffiliateMember').insert([{ name, username, isActive: isActive !== undefined ? isActive : true }]).select().single();
   if (error) throw error;
   return res.status(201).json(data);
 });
 
 app.put('/api/members/:id', auth, async (req, res) => {
-  const { name, username, isActive } = req.body;
+  const { name, username, isActive } = req.body || {};
   const { data, error } = await supabase.from('AffiliateMember').update({ name, username, isActive, updatedAt: new Date().toISOString() }).eq('id', req.params.id).select().single();
   if (error) throw error;
   return res.json(data);
@@ -239,7 +240,6 @@ app.delete('/api/members/:id', auth, async (req, res) => {
 });
 
 // ── SETTINGS ──
-
 app.get('/api/settings', auth, async (req, res) => {
   let { data: settings } = await supabase.from('Settings').select('*').limit(1).maybeSingle();
   if (!settings) {
@@ -251,7 +251,7 @@ app.get('/api/settings', auth, async (req, res) => {
 });
 
 app.put('/api/settings', auth, async (req, res) => {
-  const { deductionPercentage, language } = req.body;
+  const { deductionPercentage, language } = req.body || {};
   const ud = { updatedAt: new Date().toISOString() };
   if (deductionPercentage !== undefined) ud.deductionPercentage = parseFloat(deductionPercentage);
   if (language !== undefined) ud.language = language;
@@ -270,7 +270,6 @@ app.put('/api/settings', auth, async (req, res) => {
 });
 
 // ── DAILY FINANCE ──
-
 const T = 'DailyFinanceTransaction';
 
 app.get('/api/daily-finance/stats', auth, async (req, res) => {
@@ -312,7 +311,7 @@ app.get('/api/daily-finance', auth, async (req, res) => {
 });
 
 app.post('/api/daily-finance', auth, async (req, res) => {
-  const { type, description, amount, transactionDate } = req.body;
+  const { type, description, amount, transactionDate } = req.body || {};
   if (!description || amount === undefined || amount === null) return res.status(400).json({ message: 'Description and amount are required' });
   const { data, error } = await supabase.from(T).insert([{ type: type || 'INCOME', description, amount: parseFloat(amount), transactionDate: transactionDate ? new Date(transactionDate).toISOString() : new Date().toISOString() }]).select().single();
   if (error) throw error;
@@ -320,7 +319,7 @@ app.post('/api/daily-finance', auth, async (req, res) => {
 });
 
 app.put('/api/daily-finance/:id', auth, async (req, res) => {
-  const { type, description, amount, transactionDate } = req.body;
+  const { type, description, amount, transactionDate } = req.body || {};
   const ud = {};
   if (type) ud.type = type;
   if (description !== undefined) ud.description = description;
@@ -339,7 +338,7 @@ app.delete('/api/daily-finance/:id', auth, async (req, res) => {
 
 // ── Error handler ──
 app.use((err, req, res, next) => {
-  console.error('API error:', err.message, err.stack);
+  console.error('API error:', err.message);
   res.status(500).json({ message: 'Server error' });
 });
 

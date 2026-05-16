@@ -5,12 +5,15 @@ import toast from 'react-hot-toast';
 export const useFinanceStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('token') || null,
-  isAuthenticated: false, // DON'T trust token immediately
-  isCheckingAuth: true, // App starts in loading state
+  isAuthenticated: false,
+  isCheckingAuth: true,
+  userRole: null,
   records: [],
   members: [],
   dashboardStats: null,
   settings: null,
+  users: [],
+  adminStats: null,
   isLoading: false,
   error: null,
   pollingIntervalId: null,
@@ -42,17 +45,19 @@ export const useFinanceStore = create((set, get) => ({
     set({ isCheckingAuth: true });
     try {
       const response = await api.get('/auth/me');
+      const userData = response.data.user;
       set({ 
         isAuthenticated: true, 
-        user: response.data.user,
+        user: userData,
+        userRole: userData.role,
         isCheckingAuth: false 
       });
     } catch (error) {
-      // Invalid token or no token
       localStorage.removeItem('token');
       set({ 
         isAuthenticated: false, 
         user: null,
+        userRole: null,
         token: null,
         isCheckingAuth: false 
       });
@@ -65,8 +70,40 @@ export const useFinanceStore = create((set, get) => ({
       const response = await api.post('/auth/login', { username, password });
       const { user, token } = response.data;
       localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: true, isLoading: false });
-      toast.success('Login successful!');
+      set({ user, token, userRole: user.role, isAuthenticated: true, isLoading: false });
+      toast.success('Login berhasil!');
+      return user.role;
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed';
+      set({ error: errorMsg, isLoading: false });
+      toast.error(errorMsg);
+      return false;
+    }
+  },
+
+  register: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post('/auth/register', { username, password });
+      set({ isLoading: false });
+      toast.success('Akun berhasil dibuat! Silakan login.');
+      return true;
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
+      set({ error: errorMsg, isLoading: false });
+      toast.error(errorMsg);
+      return false;
+    }
+  },
+
+  adminLogin: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post('/auth/admin-login', { username, password });
+      const { user, token } = response.data;
+      localStorage.setItem('token', token);
+      set({ user, token, userRole: user.role, isAuthenticated: true, isLoading: false });
+      toast.success('Admin login berhasil!');
       return true;
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message || 'Login failed';
@@ -79,7 +116,7 @@ export const useFinanceStore = create((set, get) => ({
   logout: () => {
     localStorage.removeItem('token');
     get().stopPolling();
-    set({ user: null, token: null, isAuthenticated: false, records: [], members: [], dashboardStats: null });
+    set({ user: null, token: null, userRole: null, isAuthenticated: false, records: [], members: [], dashboardStats: null, users: [], adminStats: null });
   },
 
   changeCredentials: async ({ currentPassword, newUsername, newPassword }) => {
@@ -240,6 +277,24 @@ export const useFinanceStore = create((set, get) => ({
       set({ error: error.message, isLoading: false });
       toast.error('Failed to delete member');
       return false;
+    }
+  },
+
+  fetchUsers: async () => {
+    try {
+      const response = await api.get('/auth/users');
+      set({ users: response.data });
+    } catch (error) {
+      console.error('Fetch users error:', error);
+    }
+  },
+
+  fetchAdminStats: async () => {
+    try {
+      const response = await api.get('/finance/admin-stats');
+      set({ adminStats: response.data });
+    } catch (error) {
+      console.error('Fetch admin stats error:', error);
     }
   }
 }));

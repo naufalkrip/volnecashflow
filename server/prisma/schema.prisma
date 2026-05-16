@@ -12,6 +12,7 @@ model User {
   name      String
   username  String   @unique
   password  String
+  role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -47,4 +48,20 @@ model Settings {
   deductionPercentage Float    @default(30.0)
   language            String   @default("en") // en, id
   updatedAt           DateTime @updatedAt
+}
+
+model TransactionGroup {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model DailyFinanceTransaction {
+  id              String   @id @default(uuid())
+  type            String   @default("INCOME") // INCOME, EXPENSE
+  description     String
+  amount          Float
+  transactionDate DateTime @default(now())
+  createdAt       DateTime @default(now())
+  group           String   @default("")
 }

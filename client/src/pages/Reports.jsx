@@ -80,9 +80,17 @@ const PdfModal = ({ members, records, onClose }) => {
     });
   }, [records, selectedMemberId, startDate, endDate]);
 
-  const totalGross = filteredRecords.reduce((s, r) => s + r.amount, 0);
+  const totalMasuk = useMemo(() =>
+    filteredRecords.filter(r => r.type === 'INCOME').reduce((s, r) => s + r.netAmount, 0),
+  [filteredRecords]);
   const totalDeduction = filteredRecords.reduce((s, r) => s + r.deduction, 0);
   const totalNet = filteredRecords.reduce((s, r) => s + r.netAmount, 0);
+  const totalPengeluaran = useMemo(() =>
+    filteredRecords.filter(r => r.type !== 'INCOME').reduce((s, r) => s + r.amount, 0),
+  [filteredRecords]);
+  const totalSaldoAkhir = useMemo(() =>
+    filteredRecords.reduce((s, r) => r.type === 'INCOME' ? s + r.netAmount : s - r.amount, 0),
+  [filteredRecords]);
 
   const handleGenerate = async () => {
     if (!selectedMemberId) return;
@@ -116,7 +124,7 @@ const PdfModal = ({ members, records, onClose }) => {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139);
-        doc.text('Affiliate Revenue Management System', 38, y + 17);
+        doc.text('Business Operations System', 38, y + 17);
 
         y += 28;
 
@@ -159,9 +167,7 @@ const PdfModal = ({ members, records, onClose }) => {
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(6, 78, 59);
-        // saldoAkhir computed after table — use filteredRecords directly here
-        const headerSaldo = filteredRecords.reduce((s, r) => r.type === 'INCOME' ? s + r.netAmount : s - r.amount, 0);
-        doc.text(formatCurrency(headerSaldo), pageW / 2, y, { align: 'center' });
+        doc.text(formatCurrency(totalSaldoAkhir), pageW / 2, y, { align: 'center' });
 
         y += 14;
 
@@ -184,8 +190,7 @@ const PdfModal = ({ members, records, onClose }) => {
           ];
         });
 
-        // saldoAkhir = final pdfRunning value = totalNet (same formula)
-        const saldoAkhir = pdfRunning;
+        const saldoAkhir = totalSaldoAkhir;
 
         autoTable(doc, {
           startY: y,
@@ -264,7 +269,7 @@ const PdfModal = ({ members, records, onClose }) => {
 
   const handleWhatsApp = async () => {
     const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
-    const shareMsg = `Halo, berikut laporan affiliate *${selectedMember?.name || ''}* dari Volne Cash Flow.\nPeriode: ${startDate || 'semua'} s/d ${endDate || 'sekarang'}\nTotal Net Income: ${formatCurrency(totalNet)}`;
+    const shareMsg = `Halo, berikut laporan affiliate *${selectedMember?.name || ''}* dari Volne Cash Flow.\nPeriode: ${startDate || 'semua'} s/d ${endDate || 'sekarang'}\nTotal Saldo Akhir: ${formatCurrency(totalSaldoAkhir)}`;
 
     // Try Web Share API with file (works on mobile Chrome/Safari)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -287,27 +292,27 @@ const PdfModal = ({ members, records, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
       <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800">Generate Affiliate Report</h3>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-lg font-bold text-slate-800 truncate">Generate Affiliate Report</h3>
             <p className="text-xs text-slate-400 mt-0.5">Buat laporan PDF berdasarkan anggota dan periode</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shrink-0 ml-3">
             <X size={20} />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-6">
+        <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4 sm:py-6">
           {step === 'form' && (
             <div className="space-y-5">
               {/* Select Affiliate */}
@@ -360,16 +365,16 @@ const PdfModal = ({ members, records, onClose }) => {
                     <span className="font-bold text-slate-700">{filteredRecords.length} transaksi</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Total Gross</span>
-                    <span className="font-medium text-slate-700">{formatCurrency(totalGross)}</span>
+                    <span className="text-slate-500">Total Masuk</span>
+                    <span className="font-medium text-slate-700">{formatCurrency(totalMasuk)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Total Deduction</span>
-                    <span className="font-medium text-rose-500">-{formatCurrency(totalDeduction)}</span>
+                    <span className="text-slate-500">Total Uang Keluar</span>
+                    <span className="font-medium text-rose-500">-{formatCurrency(totalPengeluaran)}</span>
                   </div>
                   <div className="pt-2 border-t border-emerald-100 flex justify-between text-sm">
-                    <span className="font-bold text-slate-700">Total Net Income</span>
-                    <span className="font-bold text-emerald-600">{formatCurrency(totalNet)}</span>
+                    <span className="font-bold text-slate-700">Total Saldo Akhir</span>
+                    <span className="font-bold text-emerald-600">{formatCurrency(totalSaldoAkhir)}</span>
                   </div>
                 </motion.div>
               )}
@@ -542,8 +547,14 @@ const Reports = () => {
               </div>
 
               {/* ── DESKTOP TABLE ── */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-left min-w-[520px]">
+              <div className="hidden sm:block">
+                <table className="w-full text-left min-w-[520px] table-fixed">
+                  <colgroup>
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       <th className="px-5 py-3.5">Tanggal</th>
@@ -552,18 +563,36 @@ const Reports = () => {
                       <th className="px-5 py-3.5">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {(() => { let running = 0; return group.records.map(record => { const isIncome = record.type === 'INCOME'; running += isIncome ? record.amount : -record.amount; return (
-                      <tr key={record.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3.5 text-sm font-medium text-slate-600">{new Date(record.date).toLocaleDateString('id-ID')}</td>
-                        <td className="px-5 py-3.5 text-sm font-semibold">
-                          <span className={isIncome ? 'text-emerald-600' : 'text-red-500'}>{isIncome ? '↑ Uang Masuk' : '↓ Uang Keluar'}</span>
-                        </td>
-                        <td className={`px-5 py-3.5 text-sm font-medium ${isIncome ? 'text-emerald-600' : 'text-red-500'}`}>{isIncome ? '+' : '-'}{formatCurrency(record.amount)}</td>
-                        <td className={`px-5 py-3.5 text-sm font-bold ${running >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(running)}</td>
-                      </tr>
-                    ); })})()}
-                  </tbody>
+                </table>
+                <div className="overflow-y-auto max-h-[300px] custom-scrollbar">
+                  <table className="w-full text-left min-w-[520px] table-fixed">
+                    <colgroup>
+                      <col className="w-[25%]" />
+                      <col className="w-[25%]" />
+                      <col className="w-[25%]" />
+                      <col className="w-[25%]" />
+                    </colgroup>
+                    <tbody className="divide-y divide-slate-50">
+                      {(() => { let running = 0; return group.records.map(record => { const isIncome = record.type === 'INCOME'; running += isIncome ? record.netAmount : -record.amount; return (
+                        <tr key={record.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="px-5 py-3.5 text-sm font-medium text-slate-600">{new Date(record.date).toLocaleDateString('id-ID')}</td>
+                          <td className="px-5 py-3.5 text-sm font-semibold">
+                            <span className={isIncome ? 'text-emerald-600' : 'text-red-500'}>{isIncome ? '↑ Uang Masuk' : '↓ Uang Keluar'}</span>
+                          </td>
+                          <td className={`px-5 py-3.5 text-sm font-medium ${isIncome ? 'text-emerald-600' : 'text-red-500'}`}>{isIncome ? '+' : '-'}{formatCurrency(record.amount)}</td>
+                          <td className={`px-5 py-3.5 text-sm font-bold ${running >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(running)}</td>
+                        </tr>
+                      ); })})()}
+                    </tbody>
+                  </table>
+                </div>
+                <table className="w-full text-left min-w-[520px] table-fixed">
+                  <colgroup>
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                  </colgroup>
                   <tfoot>
                     <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
                       <td className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-emerald-100">Total</td>
@@ -577,7 +606,7 @@ const Reports = () => {
                       </td>
                       <td className="px-5 py-3.5">
                         <p className="text-[10px] text-emerald-200 font-semibold uppercase">Saldo Akhir</p>
-                        <p className="text-sm font-bold text-white mt-0.5">{formatCurrency(group.records.reduce((s,r)=>r.type==='INCOME'?s+r.amount:s-r.amount,0))}</p>
+                        <p className="text-sm font-bold text-white mt-0.5">{formatCurrency(group.totalSaldo)}</p>
                       </td>
                     </tr>
                   </tfoot>

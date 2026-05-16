@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         .select('id')
         .eq('username', newUsername.trim())
         .neq('id', decoded.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         return res.status(400).json({ message: 'Username sudah digunakan' });

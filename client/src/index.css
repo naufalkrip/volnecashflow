@@ -7,13 +7,64 @@
 @layer base {
   html {
     @apply overflow-x-hidden;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
   }
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    width: 100%;
+    position: relative;
   }
   * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent auto-zoom on iOS when focusing inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Prevent zoom on double-tap */
+  button, a, select {
+    touch-action: manipulation;
+  }
+
+  /* Stable scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Hide scrollbar for Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -23,5 +74,51 @@
   }
   .glass-card-dark {
     @apply bg-navy-900/80 backdrop-blur-md border border-slate-700 shadow-xl rounded-2xl;
+  }
+
+  .responsive-modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4;
+  }
+
+  .responsive-modal-content {
+    @apply relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col;
+    max-height: 90vh;
+  }
+
+  .responsive-card {
+    @apply w-full max-w-full overflow-hidden;
+  }
+
+  .responsive-table-wrapper {
+    @apply w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .text-responsive {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+  }
+
+  .heading-responsive {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+  }
+}
+
+@layer utilities {
+  .max-w-page {
+    @apply max-w-7xl mx-auto w-full;
+  }
+
+  .touch-friendly {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .stable-modal {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .prevent-zoom {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
 }

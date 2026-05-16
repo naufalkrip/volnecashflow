@@ -4,14 +4,16 @@ import {
   createFinanceRecord, 
   updateFinanceRecord, 
   deleteFinanceRecord, 
-  getDashboardStats 
+  getDashboardStats,
+  getAdminStats
 } from '../controllers/finance.controller.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { verifyToken, verifyAdmin } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 router.use(verifyToken);
 
+router.get('/admin-stats', verifyAdmin, getAdminStats);
 router.get('/dashboard', getDashboardStats);
 router.get('/', getFinanceRecords);
 router.post('/', createFinanceRecord);

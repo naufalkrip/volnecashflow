@@ -2,41 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useFinanceStore } from '../store/financeStore';
 import { motion } from 'framer-motion';
-import { Lock, User, ArrowRight, Loader2, LogIn, Shield } from 'lucide-react';
+import { Lock, User, ArrowRight, Loader2, Shield, ArrowLeft } from 'lucide-react';
 import logo from '../assets/logo.png';
 
-const Login = () => {
+const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isAuthenticated, isLoading, error, userRole } = useFinanceStore();
+  const { adminLogin, isAuthenticated, isLoading, error, userRole } = useFinanceStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      if (userRole === 'ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+    if (isAuthenticated && userRole === 'ADMIN') {
+      navigate('/admin/dashboard', { replace: true });
+    } else if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, userRole, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const role = await login(username, password);
-    if (role === 'ADMIN') {
+    const success = await adminLogin(username, password);
+    if (success) {
       navigate('/admin/dashboard');
-    } else if (role) {
-      navigate('/dashboard');
     }
   };
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Soft emerald gradient backgrounds */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-50 rounded-full blur-3xl opacity-70 pointer-events-none transform translate-x-1/3 -translate-y-1/3" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-50/50 rounded-full blur-3xl opacity-50 pointer-events-none transform -translate-x-1/3 translate-y-1/3" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-emerald-50 rounded-full blur-3xl opacity-70 pointer-events-none transform -translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-emerald-50/50 rounded-full blur-3xl opacity-50 pointer-events-none transform translate-x-1/3 translate-y-1/3" />
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -44,10 +39,9 @@ const Login = () => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="w-full max-w-md z-10"
       >
-        {/* Card */}
         <div className="bg-white/80 backdrop-blur-xl border border-slate-200/80 p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/60">
           
-          {/* Logo & Branding */}
+          {/* Admin Badge */}
           <div className="text-center mb-10">
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }}
@@ -55,7 +49,9 @@ const Login = () => {
               transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 20 }}
               className="w-20 h-20 mx-auto flex items-center justify-center mb-5"
             >
-              <img src={logo} alt="Volne Cash Flow" className="w-full h-full object-contain drop-shadow-sm" />
+              <div className="w-full h-full rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <Shield size={36} className="text-white" />
+              </div>
             </motion.div>
 
             <motion.div
@@ -64,10 +60,10 @@ const Login = () => {
               transition={{ delay: 0.2 }}
             >
               <h1 className="text-2xl font-bold tracking-tight mb-1">
-                <span className="text-emerald-600">Volne</span>
-                <span className="text-emerald-500"> Cash Flow</span>
+                <span className="text-emerald-600">Admin</span>
+                <span className="text-emerald-500"> Portal</span>
               </h1>
-              <p className="text-slate-500 text-sm font-medium">Member Access Portal</p>
+              <p className="text-slate-400 text-sm font-medium">Volne Cash Flow Administration</p>
             </motion.div>
           </div>
 
@@ -77,16 +73,15 @@ const Login = () => {
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-medium text-center flex items-center justify-center gap-2"
+                className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-medium text-center"
               >
-                <span>{error}</span>
+                {error}
               </motion.div>
             )}
 
             <div className="space-y-4">
-              {/* Username */}
               <div className="relative group">
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">Username</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">Admin Username</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <User size={18} className="text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
@@ -97,12 +92,11 @@ const Login = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all placeholder:text-slate-400 font-medium"
-                    placeholder="Enter your username"
+                    placeholder="Enter admin username"
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div className="relative group">
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 pl-1">Password</label>
                 <div className="relative">
@@ -115,7 +109,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all placeholder:text-slate-400 font-medium"
-                    placeholder="Enter your password"
+                    placeholder="Enter admin password"
                   />
                 </div>
               </div>
@@ -124,41 +118,28 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm shadow-emerald-600/20 hover:shadow-md hover:shadow-emerald-600/30 transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
               {isLoading ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <>
-                  <LogIn size={18} />
-                  <span>Sign In</span>
+                  <Shield size={18} />
+                  <span>Admin Sign In</span>
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Register Link */}
-          <div className="mt-6 text-center">
-            <Link
-              to="/register"
-              className="text-sm text-slate-400 hover:text-emerald-600 transition-colors font-medium"
-            >
-              Belum punya akun? <span className="text-emerald-500 hover:text-emerald-600 font-semibold">Daftar</span>
-            </Link>
-          </div>
-
-          {/* Admin Login Button */}
+          {/* Back to User Login */}
           <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-400 font-medium mb-3">
-              Restricted access — authorized personnel only.
-            </p>
             <Link
-              to="/admin/login"
-              className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all text-sm shadow-sm shadow-emerald-600/20 group"
+              to="/login"
+              className="text-sm text-slate-400 hover:text-emerald-600 transition-colors font-medium inline-flex items-center gap-1"
             >
-              <Shield size={16} />
-              <span>Login Sebagai Admin</span>
+              <ArrowLeft size={14} />
+              Kembali ke Login Anggota
             </Link>
           </div>
         </div>
@@ -167,4 +148,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default AdminLogin;

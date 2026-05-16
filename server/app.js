@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes.js';
 import financeRoutes from './routes/finance.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import membersRoutes from './routes/members.routes.js';
+import dailyFinanceRoutes from './routes/dailyFinance.routes.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/members', membersRoutes);
+app.use('/api/daily-finance', dailyFinanceRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

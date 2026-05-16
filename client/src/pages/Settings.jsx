@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useFinanceStore } from '../store/financeStore';
-import { Save, AlertCircle, Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Settings = () => {
-  const { settings, fetchSettings, updateSettings, changeCredentials, isLoading, user } = useFinanceStore();
+  const { changeCredentials, isLoading, user } = useFinanceStore();
   
-  // General Settings State
-  const [deduction, setDeduction] = useState('');
-  const [language, setLanguage] = useState('en');
-  const [saveStatus, setSaveStatus] = useState(null);
-
   // Credentials State
   const [credForm, setCredForm] = useState({
     currentPassword: '',
@@ -22,32 +17,6 @@ const Settings = () => {
   const [showNewPw, setShowNewPw] = useState(false);
   const [credSaving, setCredSaving] = useState(false);
   const [credError, setCredError] = useState('');
-
-  useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
-
-  useEffect(() => {
-    if (settings) {
-      setDeduction(settings.deductionPercentage.toString());
-      if (settings.language) setLanguage(settings.language);
-    }
-  }, [settings]);
-
-  const handleSaveGeneral = async (e) => {
-    e.preventDefault();
-    setSaveStatus(null);
-    const success = await updateSettings({ 
-      deductionPercentage: parseFloat(deduction),
-      language
-    });
-    if (success) {
-      setSaveStatus('success');
-      setTimeout(() => setSaveStatus(null), 3000);
-    } else {
-      setSaveStatus('error');
-    }
-  };
 
   const handleChangeCredentials = async (e) => {
     e.preventDefault();
@@ -85,73 +54,6 @@ const Settings = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-
-      {/* General Settings */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100"
-      >
-        <h2 className="text-lg font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100 flex items-center gap-2">
-          <AlertCircle size={18} className="text-emerald-500" />
-          General Configuration
-        </h2>
-          
-        <form onSubmit={handleSaveGeneral} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Default Deduction (%)</label>
-              <div className="relative">
-                <input 
-                  type="number" step="0.1" min="0" max="100" required
-                  value={deduction}
-                  onChange={(e) => setDeduction(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all pr-12 font-medium text-slate-800"
-                />
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 font-medium">%</div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Display Language</label>
-              <div className="relative">
-                <select 
-                  value={language} onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-medium text-slate-800 appearance-none"
-                >
-                  <option value="id">Bahasa Indonesia</option>
-                  <option value="en">English</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center gap-4">
-            <button 
-              type="submit" disabled={isLoading || !deduction}
-              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl transition-all font-medium text-sm shadow-sm shadow-emerald-500/20 disabled:opacity-70"
-            >
-              <Save size={16} />
-              {isLoading ? 'Menyimpan...' : 'Simpan Pengaturan'}
-            </button>
-            <AnimatePresence>
-              {saveStatus === 'success' && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-emerald-500 text-sm font-medium">
-                  ✓ Pengaturan tersimpan!
-                </motion.span>
-              )}
-              {saveStatus === 'error' && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-rose-500 text-sm font-medium">
-                  Gagal menyimpan.
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-        </form>
-      </motion.div>
 
       {/* Change Credentials */}
       <motion.div

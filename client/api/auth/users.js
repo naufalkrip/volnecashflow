@@ -8,18 +8,19 @@ export default async function handler(req, res) {
 
   try {
     const decoded = verifyToken(req);
-    const { data: user, error } = await supabase
-      .from('User')
-      .select('id, name, username, role')
-      .eq('id', decoded.id)
-      .single();
-
-    if (error || !user) {
-      return res.status(401).json({ message: 'User not found' });
+    if (decoded.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Admin access required' });
     }
 
-    res.json({ valid: true, user });
+    const { data: users, error } = await supabase
+      .from('User')
+      .select('id, name, username, role, createdAt')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    res.json(users);
   } catch (error) {
+    console.error('Get users error:', error);
     res.status(401).json({ message: error.message });
   }
 }

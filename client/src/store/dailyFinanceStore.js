@@ -47,6 +47,7 @@ export const useDailyFinanceStore = create((set, get) => ({
       toast.success('Grup berhasil dibuat');
       return true;
     } catch (error) {
+      console.error('Create group API error:', error.response?.status, error.response?.data, error.message);
       const msg = error.response?.data?.message || 'Gagal membuat grup';
       set({ error: msg, isLoading: false });
       toast.error(msg);

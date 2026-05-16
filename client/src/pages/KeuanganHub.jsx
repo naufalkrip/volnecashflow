@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { FileText, ArrowLeftRight, Wallet, ArrowDownCircle, ArrowUpCircle, Plus, X, Edit2, Trash2, Search, Filter, Download, TrendingUp, TrendingDown, FolderOpen, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, ArrowLeftRight, Wallet, ArrowDownCircle, ArrowUpCircle, Plus, X, Edit2, Trash2, Search, Filter, Download, TrendingUp, TrendingDown, FolderOpen, Layers, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDailyFinanceStore } from '../store/dailyFinanceStore';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -527,7 +527,7 @@ const RenameModal = ({ onClose, onSubmit, isLoading, initialValue }) => {
 };
 
 const TransactionManager = () => {
-  const { records, groups, isLoading, fetchRecords, fetchGroups, addRecord, updateRecord, deleteRecord, createGroup, renameGroup, deleteGroup, fetchStats } = useDailyFinanceStore();
+  const { records, groups, isLoading, error, fetchRecords, fetchGroups, addRecord, updateRecord, deleteRecord, createGroup, renameGroup, deleteGroup, fetchStats } = useDailyFinanceStore();
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [txnModalOpen, setTxnModalOpen] = useState(false);
@@ -667,6 +667,12 @@ const TransactionManager = () => {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-medium flex items-center gap-2">
+          <AlertCircle size={16} />
+          {error}
+        </div>
+      )}
       <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">

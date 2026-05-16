@@ -7,6 +7,12 @@ export default async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  if (typeof req.body === 'string') {
+    try { req.body = JSON.parse(req.body); } catch (e) { req.body = {}; }
+  } else if (!req.body || typeof req.body !== 'object') {
+    req.body = {};
+  }
+
   const url = new URL(req.url, 'http://localhost');
   const parts = url.pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
   const [group, ...rest] = parts;
@@ -362,7 +368,7 @@ export default async function handler(req, res) {
 
     return notFound();
   } catch (error) {
-    console.error(`API [${parts.join('/')}] error:`, error);
-    return respond(500, { message: `Server error: ${error.message || error}` });
+    console.error(`API [${parts.join('/')}] error:`, error.message);
+    return respond(500, { message: 'Server error' });
   }
 }

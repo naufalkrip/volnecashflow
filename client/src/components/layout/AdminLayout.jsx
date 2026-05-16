@@ -33,8 +33,6 @@ const AdminLayout = () => {
 
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/admin/keuangan', icon: Wallet, label: 'Manajemen Keuangan' },
-    { path: '/admin/affiliate-hub', icon: LayoutGrid, label: 'Affiliate Hub' },
     { path: '/admin/settings', icon: Settings, label: 'Settings' },
   ];
 

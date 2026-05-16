@@ -1,23 +1,25 @@
 import React, { useEffect } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { motion } from 'framer-motion';
-import { Users, Shield, UserCheck, UserX, Calendar, Search } from 'lucide-react';
+import { Users, Shield, UserCheck, UserX, Calendar, Search, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
-  const { members, fetchMembers, isLoading } = useFinanceStore();
+  const { users, fetchUsers } = useFinanceStore();
   const [searchQuery, setSearchQuery] = React.useState('');
 
   useEffect(() => {
-    fetchMembers({}, true);
-  }, [fetchMembers]);
+    fetchUsers();
+  }, [fetchUsers]);
 
-  const filtered = members.filter(m =>
-    m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.username?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = users.filter(u =>
+    u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const activeCount = members.filter(m => m.isActive !== false).length;
-  const totalCount = members.length;
+  const activeCount = users.filter(u => u.role === 'USER').length;
+  const adminCount = users.filter(u => u.role === 'ADMIN').length;
+  const totalCount = users.length;
 
   return (
     <div className="space-y-6">
@@ -35,7 +37,7 @@ const AdminDashboard = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Admin Dashboard</h2>
-            <p className="text-sm text-emerald-100">{totalCount} anggota terdaftar</p>
+            <p className="text-sm text-emerald-100">{totalCount} pengguna terdaftar</p>
           </div>
         </div>
       </motion.div>
@@ -49,10 +51,10 @@ const AdminDashboard = () => {
           className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3"
         >
           <div className="p-2.5 rounded-xl bg-emerald-50">
-            <UserCheck size={20} className="text-emerald-600" />
+            <Users size={20} className="text-emerald-600" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">Aktif</p>
+            <p className="text-xs text-slate-400 font-medium">Anggota</p>
             <p className="text-xl font-bold text-slate-800">{activeCount}</p>
           </div>
         </motion.div>
@@ -63,16 +65,35 @@ const AdminDashboard = () => {
           className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3"
         >
           <div className="p-2.5 rounded-xl bg-slate-50">
-            <Users size={20} className="text-slate-600" />
+            <Shield size={20} className="text-slate-600" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">Total</p>
-            <p className="text-xl font-bold text-slate-800">{totalCount}</p>
+            <p className="text-xs text-slate-400 font-medium">Admin</p>
+            <p className="text-xl font-bold text-slate-800">{adminCount}</p>
           </div>
         </motion.div>
       </div>
 
-      {/* Members List */}
+      {/* Settings Card */}
+      <Link to="/admin/settings">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 hover:border-emerald-200 hover:shadow-md transition-all group"
+        >
+          <div className="p-2.5 rounded-xl bg-violet-50 group-hover:bg-violet-100 transition-colors">
+            <Settings size={20} className="text-violet-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-800">Pengaturan Akun</p>
+            <p className="text-xs text-slate-400">Ubah username dan password admin</p>
+          </div>
+          <span className="text-emerald-500 text-sm font-semibold group-hover:translate-x-1 transition-transform">&rarr;</span>
+        </motion.div>
+      </Link>
+
+      {/* Users List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,11 +104,11 @@ const AdminDashboard = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <Users size={18} className="text-emerald-500" />
-              Daftar Anggota
+              Daftar Pengguna Terdaftar
             </h3>
             <div className="relative w-full sm:w-64">
               <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
-              <input type="text" placeholder="Cari anggota..." value={searchQuery}
+              <input type="text" placeholder="Cari pengguna..." value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none" />
             </div>
@@ -99,60 +120,55 @@ const AdminDashboard = () => {
               <tr className="border-b border-slate-100 bg-slate-50/50">
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nama</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Username</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Role</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Bergabung</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
-                      <p className="text-slate-400 text-sm">Memuat data...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <UserX size={32} className="text-slate-300" />
                       <p className="text-slate-400 text-sm font-medium">
-                        {searchQuery ? 'Anggota tidak ditemukan' : 'Belum ada anggota terdaftar'}
+                        {searchQuery ? 'Pengguna tidak ditemukan' : 'Belum ada pengguna terdaftar'}
                       </p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                filtered.map((m, i) => (
-                  <tr key={m.id} className="border-b border-slate-50 hover:bg-emerald-50/40 transition-colors">
+                filtered.map((u, i) => (
+                  <tr key={u.id} className="border-b border-slate-50 hover:bg-emerald-50/40 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                          {m.name?.charAt(0)?.toUpperCase()}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${
+                          u.role === 'ADMIN'
+                            ? 'bg-gradient-to-br from-red-400 to-red-600'
+                            : 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                        }`}>
+                          {u.name?.charAt(0)?.toUpperCase()}
                         </div>
-                        <span className="font-medium text-slate-700">{m.name}</span>
+                        <span className="font-medium text-slate-700">{u.name}</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="text-slate-500">@{m.username || '-'}</span>
+                      <span className="text-slate-500">@{u.username || '-'}</span>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                        m.isActive !== false
-                          ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
-                          : 'bg-slate-50 text-slate-400 ring-1 ring-slate-200'
+                        u.role === 'ADMIN'
+                          ? 'bg-red-50 text-red-600 ring-1 ring-red-200'
+                          : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
                       }`}>
-                        {m.isActive !== false ? <UserCheck size={12} /> : <UserX size={12} />}
-                        {m.isActive !== false ? 'Aktif' : 'Nonaktif'}
+                        {u.role === 'ADMIN' ? <Shield size={12} /> : <UserCheck size={12} />}
+                        {u.role === 'ADMIN' ? 'Admin' : 'Anggota'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="text-xs text-slate-400 flex items-center gap-1.5">
                         <Calendar size={12} />
-                        {m.createdAt
-                          ? new Date(m.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+                        {u.createdAt
+                          ? new Date(u.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
                           : '-'}
                       </span>
                     </td>
@@ -162,9 +178,9 @@ const AdminDashboard = () => {
             </tbody>
           </table>
         </div>
-        {!isLoading && filtered.length > 0 && (
+        {filtered.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-400 text-right">
-            Menampilkan {filtered.length} dari {totalCount} anggota
+            Menampilkan {filtered.length} dari {totalCount} pengguna
           </div>
         )}
       </motion.div>

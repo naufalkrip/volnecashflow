@@ -10,7 +10,7 @@ export const login = async (req, res) => {
       .from('User')
       .select('*')
       .eq('username', username)
-      .single();
+      .maybeSingle();
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -53,18 +53,16 @@ export const register = async (req, res) => {
       .from('User')
       .select('id')
       .eq('username', username)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const { data: newUser, error: createError } = await supabase
+    const { error: createError } = await supabase
       .from('User')
-      .insert([{ name: username, username, password: hashedPassword, role: 'USER' }])
-      .select()
-      .single();
+      .insert([{ name: username, username, password: hashedPassword, role: 'USER' }]);
 
     if (createError) throw createError;
 
@@ -85,7 +83,7 @@ export const adminLogin = async (req, res) => {
       .from('User')
       .select('*')
       .eq('username', username)
-      .single();
+      .maybeSingle();
 
     if (!user && username === 'admin') {
       const hashedPassword = await bcrypt.hash('admin123', 10);

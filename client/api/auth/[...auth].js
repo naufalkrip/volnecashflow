@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       case 'login': {
         if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
         const { username, password } = req.body;
-        let { data: user } = await supabase.from('User').select('*').eq('username', username).single();
+        let { data: user } = await supabase.from('User').select('*').eq('username', username).maybeSingle();
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ message: 'Username and password are required' });
         if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
-        const { data: existing } = await supabase.from('User').select('id').eq('username', username).single();
+        const { data: existing } = await supabase.from('User').select('id').eq('username', username).maybeSingle();
         if (existing) return res.status(400).json({ message: 'Username already exists' });
         const hashedPassword = await bcrypt.hash(password, 10);
         const { error: createError } = await supabase.from('User').insert([{ name: username, username, password: hashedPassword, role: 'USER' }]);
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       case 'admin-login': {
         if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
         const { username, password } = req.body;
-        let { data: user } = await supabase.from('User').select('*').eq('username', username).single();
+        let { data: user } = await supabase.from('User').select('*').eq('username', username).maybeSingle();
         if (!user && username === 'admin') {
           const hashedPassword = await bcrypt.hash('admin123', 10);
           const { data: newUser, error: createError } = await supabase.from('User').insert([{ name: 'Admin', username: 'admin', password: hashedPassword, role: 'ADMIN' }]).select().single();
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       case 'me': {
         if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
         const decoded = verifyToken(req);
-        const { data: user } = await supabase.from('User').select('id, name, username, role').eq('id', decoded.id).single();
+        const { data: user } = await supabase.from('User').select('id, name, username, role').eq('id', decoded.id).maybeSingle();
         if (!user) return res.status(401).json({ message: 'User not found' });
         return res.json({ valid: true, user });
       }

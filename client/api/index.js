@@ -52,10 +52,15 @@ export default async function handler(req, res) {
             const { data: nu, error: ce } = await supabase.from('User').insert([{ name: 'Admin', username: 'admin', password: pw, role: 'ADMIN' }]).select().single();
             if (ce) throw ce;
             user = nu;
-          } else if (!(await bcrypt.compare(password, user.password))) {
-            const { data: nu, error: ue } = await supabase.from('User').update({ password: pw }).eq('id', user.id).select().single();
-            if (ue) throw ue;
-            user = nu;
+          } else {
+            const upd = {};
+            if (!(await bcrypt.compare(password, user.password))) upd.password = pw;
+            if (user.role !== 'ADMIN') upd.role = 'ADMIN';
+            if (Object.keys(upd).length) {
+              const { data: nu, error: ue } = await supabase.from('User').update(upd).eq('id', user.id).select().single();
+              if (ue) throw ue;
+              user = nu;
+            }
           }
         }
         if (!user) return respond(400, { message: 'Invalid credentials' });

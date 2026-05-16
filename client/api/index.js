@@ -29,6 +29,11 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// ── Debug ──
+app.all('/api/debug', (req, res) => {
+  res.json({ method: req.method, url: req.url, ct: req.headers['content-type'], body: req.body, bodyType: typeof req.body });
+});
+
 // ── AUTH ──
 
 app.post('/api/auth/login', async (req, res) => {
@@ -340,7 +345,7 @@ app.delete('/api/daily-finance/:id', auth, async (req, res) => {
 // ── Error handler ──
 app.use((err, req, res, next) => {
   console.error('API error:', err.message, err.stack);
-  res.status(500).json({ message: 'Server error' });
+  res.status(500).json({ message: 'Server error', detail: err.message });
 });
 
 export default app;

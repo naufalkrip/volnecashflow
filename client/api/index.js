@@ -363,7 +363,6 @@ export default async function handler(req, res) {
     return notFound();
   } catch (error) {
     console.error(`API [${parts.join('/')}] error:`, error);
-    const status = error.message?.includes('denied') || error.message?.includes('token') ? 401 : 500;
-    return respond(status, { message: status === 401 ? error.message : 'Server error' });
+    return respond(500, { message: `Server error: ${error.message || error}` });
   }
 }
